@@ -1,0 +1,5 @@
+-Clone & pull the current repository
+-Write down your full name under the current name(s)
+-Push to the master repository
+
+>Sherif Salama
