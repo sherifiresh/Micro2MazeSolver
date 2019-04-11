@@ -1,0 +1,93 @@
+/////////////////////////////////////////////Read Me\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+--In the "DEFINITIONS" section,we choose three pins for each motor.
+--In the "SETUP" section, we just defined which pins become I/O.
+--In the "Loop" section. we just create a variable, and send it as an input parameter to the function, feel free to change the value of s to check for yourself.
+--The required functions are in the "FUNCTIONS" section.
+/////////////////////////////////////////////Read Me\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+/////////////////////////////////////////////DEFINITIONS\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+//For first motor
+const int pwm1 = 3 ;  //initializing pin 3 as pwm
+const int in_1 = 1 ;
+const int in_2 = 2 ;
+//
+
+//For second motor
+const int pwm2 = 4 ;  //initializing pin 3 as pwm
+const int in_3 = 5 ;
+const int in_4 = 6 ;
+//
+/////////////////////////////////////////////DEFINITIONS\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+/////////////////////////////////////////////SETUP\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+void setup() {
+  // put your setup code here, to run once:
+/////////////Motor 1
+pinMode(pwm1,OUTPUT) ;   //we have to set PWM pin as output
+pinMode(in_1,OUTPUT) ;  //Logic pins are also set as output
+pinMode(in_2,OUTPUT) ;
+/////////////
+
+/////////////Motor 2
+pinMode(pwm2,OUTPUT) ;   //we have to set PWM pin as output
+pinMode(in_3,OUTPUT) ;  //Logic pins are also set as output
+pinMode(in_4,OUTPUT) ;
+/////////////
+}
+/////////////////////////////////////////////SETUP\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+/////////////////////////////////////////////LOOP\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+void loop() {
+  // put your main code here, to run repeatedly:
+int s=-255;
+SetWheelLeft(s);
+SetWheelRight(s);
+}
+/////////////////////////////////////////////LOOP\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+////////////////////////////////////////////////////FUNCTIONS\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+////////////////Left Wheel Movement
+void SetWheelLeft(int s)
+{
+  if(s>0)
+  {
+    //For Clock wise motion , in_1 = High , in_2 = Low
+    digitalWrite(in_1,HIGH) ;
+    digitalWrite(in_2,LOW) ;
+    analogWrite(pwm1,s) ;
+    return;
+  }
+  else if(s<0)
+  {
+    //For Anti-Clock wise motion , in_1 = Low , in_2 = High
+    digitalWrite(in_1,LOW) ;
+    digitalWrite(in_2,HIGH) ;
+    analogWrite(pwm1,-s) ;
+    return;
+  }
+  return;
+}
+////////////////
+////////////////Right Wheel Movement
+void SetWheelRight(int s)
+{
+  if(s>0)
+  {
+    //For Clock wise motion , in_1 = High , in_2 = Low
+    digitalWrite(in_3,HIGH) ;
+    digitalWrite(in_4,LOW) ;
+    analogWrite(pwm2,s) ;
+    return;
+  }
+  else if(s<0)
+  {
+    //For Anti-Clock wise motion , in_1 = Low , in_2 = High
+    digitalWrite(in_3,LOW) ;
+    digitalWrite(in_4,HIGH) ;
+    analogWrite(pwm2,-s) ;
+    return;
+  }
+  return;
+}
+////////////////
+////////////////////////////////////////////////////FUNCTIONS\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
