@@ -1,0 +1,190 @@
+/////////////////////////////////////////////Read Me\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+--In the "DEFINITIONS" section,we choose two pins and a float (to take output of the "pulseIn" function) for each sensor.
+--In the "SETUP" section, we just defined which pins become I/O.
+--In the "Loop" section. we just add a few unchangeable lines of code (Including a code that activates the function) for each sensor, "Serial.print" Function need not be written; as it was just to check the sensors.
+--The required functions are in the "FUNCTIONS" section.
+/////////////////////////////////////////////Read Me\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+/////////////////////////////////////////////DEFINITIONS\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+//////////////////Ultra Sonic Front
+const int TriggerPin1 = 11;      //Trig pin
+const int EchoPin1 = 10;         //Echo pin
+float Duration1 = 0;
+//////////////////
+//For providing logic to L298 IC to choose the direction of the DC motor 
+
+//////////////////Ultra Sonic Back
+const int TriggerPin2 = 11;      //Trig pin
+const int EchoPin2 = 10;         //Echo pin
+float Duration2 = 0;
+//////////////////
+//For providing logic to L298 IC to choose the direction of the DC motor 
+
+//////////////////Ultra Sonic Left
+const int TriggerPin3 = 11;      //Trig pin
+const int EchoPin3 = 10;         //Echo pin
+float Duration3 = 0;
+//////////////////
+//For providing logic to L298 IC to choose the direction of the DC motor 
+
+//////////////////Ultra Sonic Right
+const int TriggerPin4 = 11;      //Trig pin
+const int EchoPin4 = 10;         //Echo pin
+float Duration4 = 0;
+//////////////////
+//For providing logic to L298 IC to choose the direction of the DC motor 
+/////////////////////////////////////////////DEFINITIONS\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+/////////////////////////////////////////////SETUP\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+void setup() {
+  // put your setup code here, to run once:
+/////////////Ultra Sonic Front
+// put your setup code here, to run once:
+  pinMode(TriggerPin1,OUTPUT);  // Trigger is an output pin
+  pinMode(EchoPin1,INPUT);      // Echo is an input pin
+  Serial.begin(9600);          // Serial Output
+////////////
+
+/////////////Ultra Sonic Back
+// put your setup code here, to run once:
+  pinMode(TriggerPin2,OUTPUT);  // Trigger is an output pin
+  pinMode(EchoPin2,INPUT);      // Echo is an input pin
+////////////
+
+/////////////Ultra Sonic Left
+// put your setup code here, to run once:
+  pinMode(TriggerPin3,OUTPUT);  // Trigger is an output pin
+  pinMode(EchoPin3,INPUT);      // Echo is an input pin
+////////////
+
+/////////////Ultra Sonic Right
+// put your setup code here, to run once:
+  pinMode(TriggerPin4,OUTPUT);  // Trigger is an output pin
+  pinMode(EchoPin4,INPUT);      // Echo is an input pin
+////////////
+}
+/////////////////////////////////////////////SETUP\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+/////////////////////////////////////////////LOOP\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+void loop() {
+  // put your main code here, to run repeatedly:
+//////////////Ultra Sonic Front
+// put your main code here, to run repeatedly:
+  digitalWrite(TriggerPin1, LOW);                   
+  delayMicroseconds(2);
+  digitalWrite(TriggerPin1, HIGH);          // Trigger pin to HIGH
+  delayMicroseconds(10);                   // 10us high 
+  digitalWrite(TriggerPin1, LOW);           // Trigger pin to HIGH
+ 
+  Duration1 = pulseIn(EchoPin1,HIGH);        // Waits for the echo pin to get high
+                                           // returns the Duration in microseconds
+  float Distance1_cm = GetDistanceFront(Duration1);   // Use function to calculate the distance
+ 
+  Serial.print("Distance = ");             // Output to serial
+  Serial.print(Distance1_cm);
+  Serial.println(" cm");
+ 
+  delay(300);                             // Wait to do next measurement
+//////////////
+
+//////////////Ultra Sonic Back
+// put your main code here, to run repeatedly:
+  digitalWrite(TriggerPin2, LOW);                   
+  delayMicroseconds(2);
+  digitalWrite(TriggerPin2, HIGH);          // Trigger pin to HIGH
+  delayMicroseconds(10);                   // 10us high 
+  digitalWrite(TriggerPin2, LOW);           // Trigger pin to HIGH
+ 
+  Duration2 = pulseIn(EchoPin2,HIGH);        // Waits for the echo pin to get high
+                                           // returns the Duration in microseconds
+  float Distance2_cm = GetDistanceFront(Duration2);   // Use function to calculate the distance
+ 
+  Serial.print("Distance = ");             // Output to serial
+  Serial.print(Distance2_cm);
+  Serial.println(" cm");
+ 
+  delay(300);                             // Wait to do next measurement
+//////////////
+
+//////////////Ultra Sonic Left
+// put your main code here, to run repeatedly:
+  digitalWrite(TriggerPin3, LOW);                   
+  delayMicroseconds(2);
+  digitalWrite(TriggerPin3, HIGH);          // Trigger pin to HIGH
+  delayMicroseconds(10);                   // 10us high 
+  digitalWrite(TriggerPin3, LOW);           // Trigger pin to HIGH
+ 
+  Duration3 = pulseIn(EchoPin3,HIGH);        // Waits for the echo pin to get high
+                                           // returns the Duration in microseconds
+  float Distance3_cm = GetDistanceFront(Duration3);   // Use function to calculate the distance
+ 
+  Serial.print("Distance = ");             // Output to serial
+  Serial.print(Distance3_cm);
+  Serial.println(" cm");
+ 
+  delay(300);                             // Wait to do next measurement
+//////////////
+
+//////////////Ultra Sonic Right
+// put your main code here, to run repeatedly:
+  digitalWrite(TriggerPin4, LOW);                   
+  delayMicroseconds(2);
+  digitalWrite(TriggerPin4, HIGH);          // Trigger pin to HIGH
+  delayMicroseconds(10);                   // 10us high 
+  digitalWrite(TriggerPin4, LOW);           // Trigger pin to HIGH
+ 
+  Duration4 = pulseIn(EchoPin4,HIGH);        // Waits for the echo pin to get high
+                                           // returns the Duration in microseconds
+  float Distance4_cm = GetDistanceFront(Duration4);   // Use function to calculate the distance
+ 
+  Serial.print("Distance = ");             // Output to serial
+  Serial.print(Distance4_cm);
+  Serial.println(" cm");
+ 
+  delay(300);                             // Wait to do next measurement
+//////////////
+}
+/////////////////////////////////////////////LOOP\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+////////////////////////////////////////////////////FUNCTIONS\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+/////////////////Ultra Sonic Front
+float GetDistanceFront(float time)
+{
+  float DistanceCalc;                      // Calculation variable
+   
+  DistanceCalc = ((time * 0.034) / 2);     // Actual calculation in cm
+    //DistanceCalc = time / 74 / 2;         // Actual calculation in inches
+  return DistanceCalc;                    // return calculated value
+}
+/////////////////
+/////////////////Ultra Sonic Back
+float GetDistanceBack(float time)
+{
+  float DistanceCalc;                      // Calculation variable
+   
+  DistanceCalc = ((time * 0.034) / 2);     // Actual calculation in cm
+    //DistanceCalc = time / 74 / 2;         // Actual calculation in inches
+  return DistanceCalc;                    // return calculated value
+}
+/////////////////
+/////////////////Ultra Sonic Left
+float GetDistanceLeft(float time)
+{
+  float DistanceCalc;                      // Calculation variable
+   
+  DistanceCalc = ((time * 0.034) / 2);     // Actual calculation in cm
+    //DistanceCalc = time / 74 / 2;         // Actual calculation in inches
+  return DistanceCalc;                    // return calculated value
+}
+/////////////////
+/////////////////Ultra Sonic Right
+float GetDistanceRight(float time)
+{
+  float DistanceCalc;                      // Calculation variable
+   
+  DistanceCalc = ((time * 0.034) / 2);     // Actual calculation in cm
+    //DistanceCalc = time / 74 / 2;         // Actual calculation in inches
+  return DistanceCalc;                    // return calculated value
+}
+/////////////////
+////////////////////////////////////////////////////FUNCTIONS\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
