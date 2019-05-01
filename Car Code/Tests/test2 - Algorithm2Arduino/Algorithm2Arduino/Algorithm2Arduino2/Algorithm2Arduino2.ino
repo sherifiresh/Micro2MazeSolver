@@ -46,9 +46,13 @@ struct curPos
             "???????????????????",
             "???????????????????",
             "???????????????????",
-            "???????????????????"};;
+            "???????????????????"};
     int carPosX = 9, carPosY = 9;
-    Queue<curPos> Q = Queue<curPos>(20);
+    
+    curPos Q[50];
+    int Qstart = 0;
+    int Qsize = 0;
+    
     int visitedS[100];
     int visitedB[100];
     int facingDirection = 0; //0 up, 1 right, 2 down, 3 left
@@ -209,11 +213,42 @@ void PrintMap()
 }
 void Qclear()
 {
-  while(Q.count() > 1)
+  /*
+  while(Qcount() > 1)
   {
-    Q.pop();
+    Qpop();
   }
-  //Q.clear();
+  Qclear();*/
+  Qstart = 0;
+    Qsize = 0;
+  for(int i = 0; i < 50; i++)
+  {
+    Q[i].x = 0; Q[i].y = 0; Q[i].lastDir = "";
+    
+  }
+}
+void Qpush(curPos cP)
+{
+  Q[(Qstart+Qsize)%50] = cP;
+  Qsize++;
+}
+void Qpop()
+{
+  if(Qsize < 1)
+  {
+    return;
+  }
+  Q[Qstart].x = 0; Q[Qstart].y = 0; Q[Qstart].lastDir = "";
+  Qstart = (Qstart+1) % 50;
+  Qsize--;
+}
+curPos Qpeek()
+{
+  return Q[Qstart];
+}
+int Qcount()
+{
+  return Qsize;
 }
 void Awake()
     {
@@ -297,19 +332,19 @@ int get2DIn1D(int x, int y)
         beg.x = carPosX; beg.y = carPosY;
         refreshVS();
         Qclear();
-        Q.push(beg);
+        Qpush(beg);
         pickGoToTargetSpotBFS();
     }
     void pickGoToTargetSpotBFS()
     {
-      Serial.println(Q.count());   
-        if (Q.count() == 0)
+      Serial.println(Qcount());   
+        if (Qcount() == 0)
         {
           Serial.println("GG");
             return;
         }
-        curPos cP = Q.peek();
-        Q.pop(); 
+        curPos cP = Qpeek();
+        Qpop(); 
            
         if (cP.x < 0 || cP.y < 0 || cP.x >= myMap[0].length() || cP.y >= myMap[0].length() || isWall(cP) || myMap[cP.y][cP.x] == '?' || visitedS[get2DIn1D(cP.x, cP.y)] == 1)
         {
@@ -321,7 +356,10 @@ int get2DIn1D(int x, int y)
         visitedS[get2DIn1D(cP.x, cP.y)] = 1;
         if(visitedB[get2DIn1D(cP.x, cP.y)] == 1)
         {
-
+          while(Qcount() > 0)
+          {
+            pickGoToTargetSpotBFS();
+          }
           Serial.println("Next0");
             curPos right, down, left, up;
             Serial.println("Next1");
@@ -330,13 +368,13 @@ int get2DIn1D(int x, int y)
             left.x = cP.x - 2; left.y = cP.y; left.lastDir = "l";
             up.x = cP.x; up.y = cP.y - 2; up.lastDir = "u";
             Serial.println("Next20");
-            Q.push(right);
+            Qpush(right);
             Serial.println("Next21"); 
-            Q.push(down); 
+            Qpush(down); 
             Serial.println("Next22");
-            Q.push(left); 
+            Qpush(left); 
             Serial.println("Next23");
-            Q.push(up);
+            Qpush(up);
             Serial.println("Next3");
             pickGoToTargetSpotBFS();
             Serial.println("Next4");
@@ -382,7 +420,7 @@ int get2DIn1D(int x, int y)
 
         curPos beg;
         beg.x = carPosX; beg.y = carPosY; beg.lastDir = "";
-        Q.push(beg);
+        Qpush(beg);
         refreshVS();        
         instructions = getShortestPath(X, Y);
         instructionIndex = 0;
@@ -391,10 +429,10 @@ int get2DIn1D(int x, int y)
     }
     String getShortestPath(int tX, int tY)
     {
-        if (Q.count() == 0)
+        if (Qcount() == 0)
             return "";
-        curPos cP = Q.peek();
-        Q.pop();
+        curPos cP = Qpeek();
+        Qpop();
         if (cP.x < 0 || cP.y < 0 || cP.x >= myMap[0].length() || cP.y >= myMap[0].length() || isWall(cP) || myMap[cP.y][cP.x] == '?' || visitedS[get2DIn1D(cP.x, cP.y)] == 1)
         {
             
@@ -406,7 +444,7 @@ int get2DIn1D(int x, int y)
             Qclear();
             return cP.lastDir;
         }
-        while(Q.count() != 0)
+        while(Qcount() != 0)
         {
             String s = getShortestPath(tX, tY);
             if (s != "")
@@ -417,7 +455,7 @@ int get2DIn1D(int x, int y)
         down.x = cP.x; down.y = cP.y + 2; down.lastDir = cP.lastDir + "d";
         left.x = cP.x - 2; left.y = cP.y; left.lastDir = cP.lastDir + "l";
         up.x = cP.x; up.y = cP.y - 2; up.lastDir = cP.lastDir + "u";
-        Q.push(right); Q.push(down); Q.push(left); Q.push(up);
+        Qpush(right); Qpush(down); Qpush(left); Qpush(up);
 
         return getShortestPath(tX, tY);
     }
