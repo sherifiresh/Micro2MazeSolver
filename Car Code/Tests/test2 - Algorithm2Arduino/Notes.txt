@@ -1,0 +1,1 @@
+Error could be in Cp.lastDir == ""

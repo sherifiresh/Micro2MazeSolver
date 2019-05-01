@@ -1,4 +1,4 @@
-﻿#include <Queue.h>
+#include <Queue.h>
 
 const int rotSpeedR = 109;
 const int rotSpeedL = 106;
@@ -48,9 +48,7 @@ struct curPos
             "???????????????????",
             "???????????????????"};
     int carPosX = 9, carPosY = 9;
-    Queue<int> QX;
-    Queue<int> QY;
-    Queue<String> QlastDir;
+    Queue<curPos> Q;
     int * visitedS;
     int * visitedB;
     int facingDirection = 0; //0 up, 1 right, 2 down, 3 left
