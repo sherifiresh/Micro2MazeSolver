@@ -15,7 +15,7 @@ const int startDelay = 3000;
 
 bool hasStarted = false;
 int Black;
-float wallExistDistance = 15;
+float wallExistDistance = 20;
 
 
 
@@ -46,11 +46,11 @@ struct curPos
             "???????????????????",
             "???????????????????",
             "???????????????????",
-            "???????????????????"};
+            "???????????????????"};;
     int carPosX = 9, carPosY = 9;
-    Queue<curPos> Q;
-    int * visitedS;
-    int * visitedB;
+    Queue<curPos> Q = Queue<curPos>(20);
+    int visitedS[100];
+    int visitedB[100];
     int facingDirection = 0; //0 up, 1 right, 2 down, 3 left
     bool hasReachedDestination = false;
     int targetX = 0, targetY = 0;
@@ -165,7 +165,6 @@ pinMode(in_4,OUTPUT) ;
 
 //LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
 void loop() {
-  Serial.print("lol");  
   Start();
   ReadSensors();
 
@@ -188,8 +187,7 @@ else
 {
   MoveStepForward();
 }*/
-MoveStepForward();
-//Update();
+Update();
 }
 //LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
 
@@ -200,15 +198,28 @@ MoveStepForward();
 
 
 
-
 /////////////////////////AAAAAAAAAAAAAAAAAAAAAAAALLLLLLLLLLLLLLLLLLLLLLLLLGGGGGGGGGGGGGGGGGGGGGGGOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
+void PrintMap()
+{
+  for(int i = 0; i < myMap[0].length(); i++)
+  {
+    Serial.println(myMap[i]);
+  }
+  Serial.println("");
+}
+void Qclear()
+{
+  while(Q.count() > 1)
+  {
+    Q.pop();
+  }
+  //Q.clear();
+}
 void Awake()
     {
       
         //carPosX = (temp.Length) / 2; carPosY = (temp.Length)/2;
-        visitedS = new int[myMap[0].length()*myMap[0].length()];
         refreshVS();
-        visitedB = new int[myMap[0].length() * myMap[0].length()];
         refreshVB();
         
         Xs = carPosX; Ys = carPosY;
@@ -225,12 +236,12 @@ void Start()
 }
     void refreshVS()
     {
-        for (int i = 0; i < myMap[0].length()*myMap[0].length(); i++)
+        for (int i = 0; i < 100; i++)
             visitedS[i] = 0;
     }
     void refreshVB()
     {
-        for (int i = 0; i < myMap[0].length() * myMap[0].length(); i++)
+        for (int i = 0; i < 100; i++)
             visitedB[i] = 0;
     }
     void ResetMode()//0 none, 1 move, 2 rotation
@@ -263,7 +274,7 @@ void Start()
     }    
 int get2DIn1D(int x, int y)
     {
-        return x + myMap[0].length()*y;
+        return x/2 + 10*y/2;
     }
     void MovePhysicallyForward()
     {
@@ -285,36 +296,55 @@ int get2DIn1D(int x, int y)
         curPos beg;
         beg.x = carPosX; beg.y = carPosY;
         refreshVS();
-        Q.clear();
+        Qclear();
         Q.push(beg);
         pickGoToTargetSpotBFS();
     }
     void pickGoToTargetSpotBFS()
     {
+      Serial.println(Q.count());   
         if (Q.count() == 0)
-            return;
-        curPos cP = Q.peek();
-        Q.pop();
-        if (cP.x < 0 || cP.y < 0 || cP.x >= myMap[0].length() || cP.y >= myMap[0].length() || isWall(cP) || myMap[cP.y][cP.x] == '?' || visitedS[get2DIn1D(cP.x, cP.y)] == 1)
         {
-            pickGoToTargetSpotBFS();
+          Serial.println("GG");
             return;
         }
+        curPos cP = Q.peek();
+        Q.pop(); 
+           
+        if (cP.x < 0 || cP.y < 0 || cP.x >= myMap[0].length() || cP.y >= myMap[0].length() || isWall(cP) || myMap[cP.y][cP.x] == '?' || visitedS[get2DIn1D(cP.x, cP.y)] == 1)
+        {
+
+          Serial.println("OUT");
+            pickGoToTargetSpotBFS();
+            return;
+        }          
         visitedS[get2DIn1D(cP.x, cP.y)] = 1;
         if(visitedB[get2DIn1D(cP.x, cP.y)] == 1)
         {
+
+          Serial.println("Next0");
             curPos right, down, left, up;
+            Serial.println("Next1");
             right.x = cP.x + 2; right.y = cP.y; right.lastDir = "r";
             down.x = cP.x; down.y = cP.y + 2; down.lastDir = "d";
             left.x = cP.x - 2; left.y = cP.y; left.lastDir = "l";
             up.x = cP.x; up.y = cP.y - 2; up.lastDir = "u";
-            Q.push(right); Q.push(down); Q.push(left); Q.push(up);
+            Serial.println("Next20");
+            Q.push(right);
+            Serial.println("Next21"); 
+            Q.push(down); 
+            Serial.println("Next22");
+            Q.push(left); 
+            Serial.println("Next23");
+            Q.push(up);
+            Serial.println("Next3");
             pickGoToTargetSpotBFS();
+            Serial.println("Next4");
             return;
         }
-        Q.clear();
+        Qclear();
         targetX = cP.x; targetY = cP.y;
-        
+        Serial.println("WIN");
         return;
     }
      bool isWall(curPos cP)
@@ -373,8 +403,14 @@ int get2DIn1D(int x, int y)
         visitedS[get2DIn1D(cP.x, cP.y)] = 1;
         if (cP.x == tX && cP.y == tY)
         {
-            Q.clear();
+            Qclear();
             return cP.lastDir;
+        }
+        while(Q.count() != 0)
+        {
+            String s = getShortestPath(tX, tY);
+            if (s != "")
+                return s;
         }
         curPos right, down, left, up;
         right.x = cP.x + 2; right.y = cP.y; right.lastDir = cP.lastDir + "r";
@@ -403,7 +439,7 @@ int get2DIn1D(int x, int y)
         //beg Determine char
         if(facingDirection == dir) //00 11 22 33
         {
-          if(isWallFront())
+          if(!isWallFront())
           {
             c = '0';
           }
@@ -412,9 +448,9 @@ int get2DIn1D(int x, int y)
             c = '1';
           }
         }
-        if((facingDirection+1 % 4) == dir) //fd/d 01 12 23 34
+        if(((facingDirection+1) % 4) == dir) //fd/d 01 12 23 30
         {
-          if(isWallRight())
+          if(!isWallRight())
           {
             c = '0';
           }
@@ -423,9 +459,9 @@ int get2DIn1D(int x, int y)
             c = '1';
           }
         }
-        if((facingDirection+2 % 4) == dir) //fd/d 01 12 23 34
+        if(((facingDirection+2) % 4) == dir) //fd/d 02 13 20 31
         {
-          if(isWallBack())
+          if(!isWallBack())
           {
             c = '0';
           }
@@ -434,9 +470,9 @@ int get2DIn1D(int x, int y)
             c = '1';
           }
         }
-        if((facingDirection+3 % 4) == dir) //fd/d 01 12 23 34
+        if(((facingDirection+3) % 4) == dir) //fd/d 03 10 21 32
         {
-          if(isWallLeft())
+          if(!isWallLeft())
           {
             c = '0';
           }
@@ -550,17 +586,15 @@ int get2DIn1D(int x, int y)
     {
         facingDirection = (facingDirection + 1) % 4; ;
     }
-    void moveForward()
-    {
-        //MazeGenerator.instance.carMoveForward(facingDirection);
-    }
      void Update()
     {
         if (!hasReachedDestination && !isMoving)
-        {
+        {            
             discover();
-            pickGoToTargetSpot();            
-            solve(targetX, targetY);
+            
+            pickGoToTargetSpot(); 
+            PrintMap();        
+            solve(targetX, targetY);            
         }
         if (!hasReturnedToBeg && isWin() && !isMoving)
         {
@@ -591,6 +625,10 @@ int get2DIn1D(int x, int y)
                     if (isRotationMode())
                     {
                         RotatePhysically();
+                        if(movingTimer > rotationTimerMax)
+                        {
+                          RotatePhysically();
+                        }
             movingTimer = -1;
                     }
                 }
@@ -610,18 +648,22 @@ int get2DIn1D(int x, int y)
 /////////////////////////AAAAAAAAAAAAAAAAAAAAAAAALLLLLLLLLLLLLLLLLLLLLLLLLGGGGGGGGGGGGGGGGGGGGGGGOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
 bool isWallFront()
 {
+  ReadFront();
   return GetDistanceFront() < wallExistDistance;
 }
 bool isWallRight()
 {
+  ReadRight();
   return GetDistanceRight() < wallExistDistance;
 }
 bool isWallBack()
 {
+  ReadBack();
   return GetDistanceBack() < wallExistDistance;
 }
 bool isWallLeft()
 {
+  ReadLeft();
   return GetDistanceLeft() < wallExistDistance;
 }
 void ReadSensors()
@@ -661,6 +703,9 @@ bool isBlack()
 }
 void ReadFront()
 {
+  float Distance1_cm = 2000;
+  while(Distance1_cm > 1000)
+  {
   //////////////Ultra Sonic Front
   digitalWrite(TriggerPin1, LOW);                   
   delayMicroseconds(2);
@@ -670,8 +715,8 @@ void ReadFront()
  
   Duration1 = pulseIn(EchoPin1,HIGH);        // Waits for the echo pin to get high
                                            // returns the Duration in microseconds
-  float Distance1_cm = GetDistanceFront();   // Use function to calculate the distance
- 
+  Distance1_cm = GetDistanceFront();   // Use function to calculate the distance
+  }
    Serial.print("Distance Front = ");             // Output to serial
  Serial.print(Distance1_cm);
  Serial.println(" cm");
@@ -680,6 +725,9 @@ void ReadFront()
 }
 void ReadRight()
 {
+  float Distance4_cm = 2000;
+  while(Distance4_cm > 1000)
+  {
   //////////////Ultra Sonic Right
   digitalWrite(TriggerPin4, LOW);                   
   delayMicroseconds(2);
@@ -689,8 +737,9 @@ void ReadRight()
  
   Duration4 = pulseIn(EchoPin4,HIGH);        // Waits for the echo pin to get high
                                            // returns the Duration in microseconds
-  float Distance4_cm = GetDistanceRight();   // Use function to calculate the distance
- 
+  Distance4_cm = GetDistanceRight();   // Use function to calculate the distance
+  }
+  
   Serial.print("Distance Right = ");             // Output to serial
   Serial.print(Distance4_cm);
   Serial.println(" cm");
@@ -699,6 +748,9 @@ void ReadRight()
 }
 void ReadBack()
 {
+  float Distance2_cm = 2000;
+  while(Distance2_cm > 1000)
+  {
   //////////////Ultra Sonic Back
   digitalWrite(TriggerPin2, LOW);                   
   delayMicroseconds(2);
@@ -708,8 +760,9 @@ void ReadBack()
  
   Duration2 = pulseIn(EchoPin2,HIGH);        // Waits for the echo pin to get high
                                            // returns the Duration in microseconds
-  float Distance2_cm = GetDistanceBack();   // Use function to calculate the distance
- 
+  Distance2_cm = GetDistanceBack();   // Use function to calculate the distance
+  }
+  
  Serial.print("Distance Back = ");             // Output to serial
  Serial.print(Distance2_cm);
  Serial.println(" cm");
@@ -718,6 +771,9 @@ void ReadBack()
 }
 void ReadLeft()
 {
+  float Distance3_cm = 2000;
+  while(Distance3_cm > 1000)
+  {
   //////////////Ultra Sonic Left
   digitalWrite(TriggerPin3, LOW);                   
   delayMicroseconds(2);
@@ -727,8 +783,8 @@ void ReadLeft()
  
   Duration3 = pulseIn(EchoPin3,HIGH);        // Waits for the echo pin to get high
                                            // returns the Duration in microseconds
-  float Distance3_cm = GetDistanceLeft();   // Use function to calculate the distance
- 
+  Distance3_cm = GetDistanceLeft();   // Use function to calculate the distance
+  }
   Serial.print("Distance Left = ");             // Output to serial
   Serial.print(Distance3_cm);
   Serial.println(" cm");
