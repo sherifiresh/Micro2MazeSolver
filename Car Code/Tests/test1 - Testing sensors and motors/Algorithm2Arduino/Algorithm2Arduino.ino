@@ -1,6 +1,18 @@
-const int rotSpeed = 65;
-const int rotTime = 600;
+const int rotSpeedR = 109;
+const int rotSpeedL = 106;
+const int rotTimeR = 270;
+const int rotTimeL = 274;
 
+const int moveLSpeed = 95;
+const int moveRSpeed = 100;
+const int moveTime = 675;
+
+const int sensorsDelay = 0;
+const int stepDelay = 2000;
+const int startDelay = 3000;
+
+bool hasStarted = false;
+int Black;
 
 
 
@@ -94,104 +106,26 @@ pinMode(in_4,OUTPUT) ;
 /////////////////
 }
 
+
+
+
+
+
+
+
+
+
+//LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
 void loop() {
-  // put your main code here, to run repeatedly:
+  Start();
+  ReadSensors();
 
-//////////////Ultra Sonic Front
-// put your main code here, to run repeatedly:
-  digitalWrite(TriggerPin1, LOW);                   
-  delayMicroseconds(2);
-  digitalWrite(TriggerPin1, HIGH);          // Trigger pin to HIGH
-  delayMicroseconds(10);                   // 10us high 
-  digitalWrite(TriggerPin1, LOW);           // Trigger pin to HIGH
- 
-  Duration1 = pulseIn(EchoPin1,HIGH);        // Waits for the echo pin to get high
-                                           // returns the Duration in microseconds
-  float Distance1_cm = GetDistanceFront(Duration1);   // Use function to calculate the distance
- 
-   Serial.print("Distance Front = ");             // Output to serial
- Serial.print(Distance1_cm);
- Serial.println(" cm");
- 
-  delay(300);                             // Wait to do next measurement
-//////////////
-
-//////////////Ultra Sonic Back
-// put your main code here, to run repeatedly:
-  digitalWrite(TriggerPin2, LOW);                   
-  delayMicroseconds(2);
-  digitalWrite(TriggerPin2, HIGH);          // Trigger pin to HIGH
-  delayMicroseconds(10);                   // 10us high 
-  digitalWrite(TriggerPin2, LOW);           // Trigger pin to HIGH
- 
-  Duration2 = pulseIn(EchoPin2,HIGH);        // Waits for the echo pin to get high
-                                           // returns the Duration in microseconds
-  float Distance2_cm = GetDistanceBack(Duration2);   // Use function to calculate the distance
- 
- Serial.print("Distance Back = ");             // Output to serial
- Serial.print(Distance2_cm);
- Serial.println(" cm");
- 
-  delay(300);                             // Wait to do next measurement
-//////////////
-
-//////////////Ultra Sonic Left
-// put your main code here, to run repeatedly:
-  digitalWrite(TriggerPin3, LOW);                   
-  delayMicroseconds(2);
-  digitalWrite(TriggerPin3, HIGH);          // Trigger pin to HIGH
-  delayMicroseconds(10);                   // 10us high 
-  digitalWrite(TriggerPin3, LOW);           // Trigger pin to HIGH
- 
-  Duration3 = pulseIn(EchoPin3,HIGH);        // Waits for the echo pin to get high
-                                           // returns the Duration in microseconds
-  float Distance3_cm = GetDistanceLeft(Duration3);   // Use function to calculate the distance
- 
-  Serial.print("Distance Left = ");             // Output to serial
-  Serial.print(Distance3_cm);
-  Serial.println(" cm");
- 
-  delay(300);                             // Wait to do next measurement
-//////////////
-
-//////////////Ultra Sonic Right
-// put your main code here, to run repeatedly:
-  digitalWrite(TriggerPin4, LOW);                   
-  delayMicroseconds(2);
-  digitalWrite(TriggerPin4, HIGH);          // Trigger pin to HIGH
-  delayMicroseconds(10);                   // 10us high 
-  digitalWrite(TriggerPin4, LOW);           // Trigger pin to HIGH
- 
-  Duration4 = pulseIn(EchoPin4,HIGH);        // Waits for the echo pin to get high
-                                           // returns the Duration in microseconds
-  float Distance4_cm = GetDistanceRight(Duration4);   // Use function to calculate the distance
- 
-  Serial.print("Distance Right = ");             // Output to serial
-  Serial.print(Distance4_cm);
-  Serial.println(" cm");
- 
-  delay(300);                             // Wait to do next measurement
-//////////////
-
-/////////////////Black Color Sensor
-int Black=digitalRead(pinBlack);
-Serial.print("Black Found");
-Serial.print("    ");
-Serial.print(Black);
-Serial.print("\n");
-delay(300);
-/////////////////
-
-delay(5000);
-SetWheelLeft(100);
-SetWheelRight(100);
-float f=GetDistanceFront(Duration1);
+float f=GetDistanceFront();
+/*
 if(f<15)
 {
-  SetWheelLeft(0);
-  SetWheelRight(0);
-  float L=GetDistanceLeft(Duration3);
-  float R=GetDistanceRight(Duration4);
+  float L=GetDistanceLeft();
+  float R=GetDistanceRight();
   if(L<R)
   {
    RotateCar90Right();
@@ -201,9 +135,138 @@ if(f<15)
    RotateCar90Left();
   }
 }
-delay(300);
+else
+{
+  MoveStepForward();
+}*/
+
+MoveStepForward();MoveStepForward();
+RotateCar90Left();RotateCar90Left();
+MoveStepForward();MoveStepForward();
+RotateCar90Right();RotateCar90Right();
+}
+//LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+
+void Start()
+{
+  if(!hasStarted)
+  {
+    hasStarted = true;
+    delay(startDelay);
+  }
 }
 
+void ReadSensors()
+{
+  ReadFront();
+ReadBack();
+ReadLeft();
+ReadRight();
+ReadBlack();
+}
+
+void MoveStepForward()
+{
+  
+  SetWheelLeft(moveLSpeed);
+  SetWheelRight(moveRSpeed);
+  delay(moveTime);
+  SetWheelLeft(0);
+  SetWheelRight(0);
+  delay(stepDelay);
+  
+}
+void ReadBlack()
+{
+  /////////////////Black Color Sensor
+Black=!digitalRead(pinBlack);
+Serial.print("Black Found");
+Serial.print("    ");
+Serial.print(Black);
+Serial.print("\n");
+delay(sensorsDelay);
+/////////////////
+}
+bool isBlack()
+{
+  return Black == 1;
+}
+void ReadFront()
+{
+  //////////////Ultra Sonic Front
+  digitalWrite(TriggerPin1, LOW);                   
+  delayMicroseconds(2);
+  digitalWrite(TriggerPin1, HIGH);          // Trigger pin to HIGH
+  delayMicroseconds(10);                   // 10us high 
+  digitalWrite(TriggerPin1, LOW);           // Trigger pin to HIGH
+ 
+  Duration1 = pulseIn(EchoPin1,HIGH);        // Waits for the echo pin to get high
+                                           // returns the Duration in microseconds
+  float Distance1_cm = GetDistanceFront();   // Use function to calculate the distance
+ 
+   Serial.print("Distance Front = ");             // Output to serial
+ Serial.print(Distance1_cm);
+ Serial.println(" cm");
+ 
+  delay(sensorsDelay);                             // Wait to do next measurement
+}
+void ReadRight()
+{
+  //////////////Ultra Sonic Right
+  digitalWrite(TriggerPin4, LOW);                   
+  delayMicroseconds(2);
+  digitalWrite(TriggerPin4, HIGH);          // Trigger pin to HIGH
+  delayMicroseconds(10);                   // 10us high 
+  digitalWrite(TriggerPin4, LOW);           // Trigger pin to HIGH
+ 
+  Duration4 = pulseIn(EchoPin4,HIGH);        // Waits for the echo pin to get high
+                                           // returns the Duration in microseconds
+  float Distance4_cm = GetDistanceRight();   // Use function to calculate the distance
+ 
+  Serial.print("Distance Right = ");             // Output to serial
+  Serial.print(Distance4_cm);
+  Serial.println(" cm");
+ 
+  delay(sensorsDelay);                             // Wait to do next measurement
+}
+void ReadBack()
+{
+  //////////////Ultra Sonic Back
+  digitalWrite(TriggerPin2, LOW);                   
+  delayMicroseconds(2);
+  digitalWrite(TriggerPin2, HIGH);          // Trigger pin to HIGH
+  delayMicroseconds(10);                   // 10us high 
+  digitalWrite(TriggerPin2, LOW);           // Trigger pin to HIGH
+ 
+  Duration2 = pulseIn(EchoPin2,HIGH);        // Waits for the echo pin to get high
+                                           // returns the Duration in microseconds
+  float Distance2_cm = GetDistanceBack();   // Use function to calculate the distance
+ 
+ Serial.print("Distance Back = ");             // Output to serial
+ Serial.print(Distance2_cm);
+ Serial.println(" cm");
+ 
+  delay(sensorsDelay);                             // Wait to do next measurement
+}
+void ReadLeft()
+{
+  //////////////Ultra Sonic Left
+  digitalWrite(TriggerPin3, LOW);                   
+  delayMicroseconds(2);
+  digitalWrite(TriggerPin3, HIGH);          // Trigger pin to HIGH
+  delayMicroseconds(10);                   // 10us high 
+  digitalWrite(TriggerPin3, LOW);           // Trigger pin to HIGH
+ 
+  Duration3 = pulseIn(EchoPin3,HIGH);        // Waits for the echo pin to get high
+                                           // returns the Duration in microseconds
+  float Distance3_cm = GetDistanceLeft();   // Use function to calculate the distance
+ 
+  Serial.print("Distance Left = ");             // Output to serial
+  Serial.print(Distance3_cm);
+  Serial.println(" cm");
+ 
+  delay(sensorsDelay);                             // Wait to do next measurement
+}
 ////////////////Right Wheel Movement
 void SetWheelRight(int s)
 {
@@ -267,42 +330,51 @@ void SetWheelLeft(int s)
 /////////////////Rotation 90 to the left
 void RotateCar90Left()
 {
-int s=-rotSpeed;
-int s1=rotSpeed;
+ 
+int s=-rotSpeedL;
+int s1=rotSpeedL;
 SetWheelLeft(s);
 SetWheelRight(s1);
-delay(rotTime);
+delay(rotTimeL);
 SetWheelLeft(0);
 SetWheelRight(0);
+delay(stepDelay);
+
 }
 ////////////////
 /////////////////Rotation 90 to the right
 void RotateCar90Right()
 {
-int s=rotSpeed;
-int s1=-rotSpeed;
+  
+int s=rotSpeedR;
+int s1=-rotSpeedR;
 SetWheelLeft(s);
 SetWheelRight(s1);
-delay(rotTime);
+delay(rotTimeR);
 SetWheelLeft(0);
 SetWheelRight(0);
+delay(stepDelay);
 }
 ////////////////
 /////////////////Rotation 180
 void RotateCar180()
 {
-int s=-rotSpeed;
-int s1=rotSpeed;
+  
+int s=-rotSpeedL;
+int s1=rotSpeedL;
 SetWheelLeft(s);
 SetWheelRight(s1);
-delay(rotTime*2);
+delay(rotTimeL*2);
 SetWheelLeft(0);
 SetWheelRight(0);
+delay(stepDelay);
+
 }
 ////////////////
 /////////////////Ultra Sonic Front
-float GetDistanceFront(float time)
+float GetDistanceFront()
 {
+  float time = Duration1;
   float DistanceCalc;                      // Calculation variable
    
   DistanceCalc = ((time * 0.034) / 2);     // Actual calculation in cm
@@ -311,8 +383,9 @@ float GetDistanceFront(float time)
 }
 /////////////////
 /////////////////Ultra Sonic Back
-float GetDistanceBack(float time)
+float GetDistanceBack()
 {
+  float time = Duration2;
   float DistanceCalc;                      // Calculation variable
    
   DistanceCalc = ((time * 0.034) / 2);     // Actual calculation in cm
@@ -321,8 +394,9 @@ float GetDistanceBack(float time)
 }
 /////////////////
 /////////////////Ultra Sonic Left
-float GetDistanceLeft(float time)
+float GetDistanceLeft()
 {
+  float time = Duration3;
   float DistanceCalc;                      // Calculation variable
    
   DistanceCalc = ((time * 0.034) / 2);     // Actual calculation in cm
@@ -331,8 +405,9 @@ float GetDistanceLeft(float time)
 }
 /////////////////
 /////////////////Ultra Sonic Right
-float GetDistanceRight(float time)
+float GetDistanceRight()
 {
+  float time = Duration4;
   float DistanceCalc;                      // Calculation variable
    
   DistanceCalc = ((time * 0.034) / 2);     // Actual calculation in cm
