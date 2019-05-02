@@ -1,4 +1,4 @@
-#include <Queue.h>
+#include <QueueList.h>
 
 const int rotSpeedR = 109;
 const int rotSpeedL = 106;
@@ -13,10 +13,12 @@ const int sensorsDelay = 0;
 const int stepDelay = 2000;
 const int startDelay = 3000;
 
+const int NRemeasure = 10;
+
 bool hasStarted = false;
 int Black;
-float wallExistDistance = 20;
-
+float wallExistDistance = 24;
+bool hasFoundBlack = false;
 
 
 
@@ -27,34 +29,26 @@ struct curPos
         int x, y;
         String lastDir;
     };
-    String myMap[19] = {
-            "???????????????????",
-            "???????????????????",
-            "???????????????????",
-            "???????????????????",
-            "???????????????????",
-            "???????????????????",
-            "???????????????????",
-            "???????????????????",
-            "???????????????????",
-            "?????????e?????????",
-            "???????????????????",
-            "???????????????????",
-            "???????????????????",
-            "???????????????????",
-            "???????????????????",
-            "???????????????????",
-            "???????????????????",
-            "???????????????????",
-            "???????????????????"};
-    int carPosX = 9, carPosY = 9;
+    String myMap[11] = {
+            "???????????",
+            "???????????",
+            "???????????",
+            "???????????",
+            "???????????",
+            "???????????",
+            "???????????",
+            "???????????",
+            "???????????",
+            "?e?????????",
+            "???????????",};
+    int carPosX = 1, carPosY = 9;
     
-    curPos Q[50];
+    QueueList<curPos> Q;
     int Qstart = 0;
     int Qsize = 0;
     
-    int visitedS[100];
-    int visitedB[100];
+    int visitedS[25];
+    int visitedB[25];
     int facingDirection = 0; //0 up, 1 right, 2 down, 3 left
     bool hasReachedDestination = false;
     int targetX = 0, targetY = 0;
@@ -70,6 +64,7 @@ struct curPos
     float rotateSpeed = 1;
     int Xs, Ys;
     bool hasReturnedToBeg = false;
+    int debugInt = 0;
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////out 1 w 2 beta3 el right motor
 /////////////out 3 w 4 beta3 el left motor
@@ -170,28 +165,7 @@ pinMode(in_4,OUTPUT) ;
 //LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
 void loop() {
   Start();
-  ReadSensors();
-
-float f=GetDistanceFront();
-/*
-if(f<15)
-{
-  float L=GetDistanceLeft();
-  float R=GetDistanceRight();
-  if(L<R)
-  {
-   RotateCar90Right();
-  }
-  else if(L>R)
-  {
-   RotateCar90Left();
-  }
-}
-else
-{
-  MoveStepForward();
-}*/
-Update();
+  Update();
 }
 //LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
 
@@ -200,55 +174,60 @@ Update();
 
 
 
-
-
-/////////////////////////AAAAAAAAAAAAAAAAAAAAAAAALLLLLLLLLLLLLLLLLLLLLLLLLGGGGGGGGGGGGGGGGGGGGGGGOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
+void markGoTo()
+{
+  myMap[targetY][targetX] = '*';
+}
+void unmarkGoTo()
+{
+  myMap[targetY][targetX] = '0';
+}
+void setPosOnMap()
+{
+  if(facingDirection == 0)
+  {
+    myMap[carPosY][carPosX] = 'a';
+  }
+  if(facingDirection == 1)
+  {
+    myMap[carPosY][carPosX] = 'b';
+  }
+  if(facingDirection == 2)
+  {
+    myMap[carPosY][carPosX] = 'c';
+  }
+  if(facingDirection == 3)
+  {
+    myMap[carPosY][carPosX] = 'd';
+  }
+}
+void resetPosOnMap()
+{
+  myMap[carPosY][carPosX] = '0';
+}
+/////////////////////////AAAAAAAAAAAAAAAAAAAAAAAALLLLLLLLLLLLLLLLLLLLLLLLLGGGGGGGGGGGGGGGGGGGGGGGOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
 void PrintMap()
 {
+  
+  markGoTo();
+  setPosOnMap();
   for(int i = 0; i < myMap[0].length(); i++)
   {
     Serial.println(myMap[i]);
   }
   Serial.println("");
+  unmarkGoTo();
+  resetPosOnMap();
+  
 }
 void Qclear()
 {
-  /*
-  while(Qcount() > 1)
+  
+  while(Q.count() > 0)
   {
-    Qpop();
+    Q.pop();
   }
-  Qclear();*/
-  Qstart = 0;
-    Qsize = 0;
-  for(int i = 0; i < 50; i++)
-  {
-    Q[i].x = 0; Q[i].y = 0; Q[i].lastDir = "";
-    
-  }
-}
-void Qpush(curPos cP)
-{
-  Q[(Qstart+Qsize)%50] = cP;
-  Qsize++;
-}
-void Qpop()
-{
-  if(Qsize < 1)
-  {
-    return;
-  }
-  Q[Qstart].x = 0; Q[Qstart].y = 0; Q[Qstart].lastDir = "";
-  Qstart = (Qstart+1) % 50;
-  Qsize--;
-}
-curPos Qpeek()
-{
-  return Q[Qstart];
-}
-int Qcount()
-{
-  return Qsize;
+  //Q.clear();
 }
 void Awake()
     {
@@ -271,12 +250,12 @@ void Start()
 }
     void refreshVS()
     {
-        for (int i = 0; i < 100; i++)
+        for (int i = 0; i < 25; i++)
             visitedS[i] = 0;
     }
     void refreshVB()
     {
-        for (int i = 0; i < 100; i++)
+        for (int i = 0; i < 25; i++)
             visitedB[i] = 0;
     }
     void ResetMode()//0 none, 1 move, 2 rotation
@@ -309,7 +288,7 @@ void Start()
     }    
 int get2DIn1D(int x, int y)
     {
-        return x/2 + 10*y/2;
+        return x/2 + 5*y/2;
     }
     void MovePhysicallyForward()
     {
@@ -331,58 +310,40 @@ int get2DIn1D(int x, int y)
         curPos beg;
         beg.x = carPosX; beg.y = carPosY;
         refreshVS();
-        Qclear();
-        Qpush(beg);
+        Q.push(beg);
         pickGoToTargetSpotBFS();
     }
     void pickGoToTargetSpotBFS()
     {
-      Serial.println(Qcount());   
-        if (Qcount() == 0)
+        if (Q.count() == 0)
         {
-          Serial.println("GG");
             return;
         }
-        curPos cP = Qpeek();
-        Qpop(); 
+        curPos cP = Q.peek();
+        Q.pop(); 
            
-        if (cP.x < 0 || cP.y < 0 || cP.x >= myMap[0].length() || cP.y >= myMap[0].length() || isWall(cP) || myMap[cP.y][cP.x] == '?' || visitedS[get2DIn1D(cP.x, cP.y)] == 1)
+        if (IsInvalidPoint(cP))
         {
-
-          Serial.println("OUT");
             pickGoToTargetSpotBFS();
             return;
         }          
         visitedS[get2DIn1D(cP.x, cP.y)] = 1;
         if(visitedB[get2DIn1D(cP.x, cP.y)] == 1)
         {
-          while(Qcount() > 0)
-          {
-            pickGoToTargetSpotBFS();
-          }
-          Serial.println("Next0");
             curPos right, down, left, up;
-            Serial.println("Next1");
             right.x = cP.x + 2; right.y = cP.y; right.lastDir = "r";
             down.x = cP.x; down.y = cP.y + 2; down.lastDir = "d";
             left.x = cP.x - 2; left.y = cP.y; left.lastDir = "l";
             up.x = cP.x; up.y = cP.y - 2; up.lastDir = "u";
-            Serial.println("Next20");
-            Qpush(right);
-            Serial.println("Next21"); 
-            Qpush(down); 
-            Serial.println("Next22");
-            Qpush(left); 
-            Serial.println("Next23");
-            Qpush(up);
-            Serial.println("Next3");
+            if(!IsInvalidPoint(up)) Q.push(up);
+         if(!IsInvalidPoint(right)) Q.push(right);
+         if(!IsInvalidPoint(down)) Q.push(down);
+         if(!IsInvalidPoint(left)) Q.push(left);        
             pickGoToTargetSpotBFS();
-            Serial.println("Next4");
             return;
         }
         Qclear();
         targetX = cP.x; targetY = cP.y;
-        Serial.println("WIN");
         return;
     }
      bool isWall(curPos cP)
@@ -392,19 +353,19 @@ int get2DIn1D(int x, int y)
             return false;
         if(cP.lastDir[cP.lastDir.length()-1] == 'u')
         {
-            return myMap[cP.y+1][cP.x] == '1';
+            return myMap[cP.y+1][cP.x] == '1' || myMap[cP.y+1][cP.x] == '?';
         }
         else if (cP.lastDir[cP.lastDir.length() - 1] == 'r')
         {
-            return myMap[cP.y][cP.x-1] == '1';
+            return myMap[cP.y][cP.x-1] == '1' || myMap[cP.y][cP.x-1] == '?';
         }
         else if (cP.lastDir[cP.lastDir.length() - 1] == 'd')
         {
-            return myMap[cP.y-1][cP.x] == '1';
+            return myMap[cP.y-1][cP.x] == '1' || myMap[cP.y-1][cP.x] == '?';
         }
         else if (cP.lastDir[cP.lastDir.length() - 1] == 'l')
         {
-            return myMap[cP.y][cP.x+1] == '1';
+            return myMap[cP.y][cP.x+1] == '1' || myMap[cP.y][cP.x+1] == '?';
         }
         return false;
     }
@@ -420,22 +381,26 @@ int get2DIn1D(int x, int y)
 
         curPos beg;
         beg.x = carPosX; beg.y = carPosY; beg.lastDir = "";
-        Qpush(beg);
+        Q.push(beg);
         refreshVS();        
         instructions = getShortestPath(X, Y);
+        Serial.println("^ " + instructions);
         instructionIndex = 0;
         isMoving = true;
         ResetMode();
     }
+    bool IsInvalidPoint(curPos cP)
+    {
+      return cP.x < 0 || cP.y < 0 || cP.x >= myMap[0].length() || cP.y >= myMap[0].length() || isWall(cP) || myMap[cP.y][cP.x] == '?' || visitedS[get2DIn1D(cP.x, cP.y)] == 1;
+    }
     String getShortestPath(int tX, int tY)
     {
-        if (Qcount() == 0)
+        if (Q.count() == 0)
             return "";
-        curPos cP = Qpeek();
-        Qpop();
-        if (cP.x < 0 || cP.y < 0 || cP.x >= myMap[0].length() || cP.y >= myMap[0].length() || isWall(cP) || myMap[cP.y][cP.x] == '?' || visitedS[get2DIn1D(cP.x, cP.y)] == 1)
-        {
-            
+        curPos cP = Q.peek();
+        Q.pop();
+        if (IsInvalidPoint(cP))
+        {            
             return getShortestPath(tX, tY);
         }
         visitedS[get2DIn1D(cP.x, cP.y)] = 1;
@@ -444,24 +409,27 @@ int get2DIn1D(int x, int y)
             Qclear();
             return cP.lastDir;
         }
-        while(Qcount() != 0)
-        {
-            String s = getShortestPath(tX, tY);
-            if (s != "")
-                return s;
-        }
         curPos right, down, left, up;
         right.x = cP.x + 2; right.y = cP.y; right.lastDir = cP.lastDir + "r";
         down.x = cP.x; down.y = cP.y + 2; down.lastDir = cP.lastDir + "d";
-        left.x = cP.x - 2; left.y = cP.y; left.lastDir = cP.lastDir + "l";
+        down.x = cP.x - 2; left.y = cP.y; left.lastDir = cP.lastDir + "l";
         up.x = cP.x; up.y = cP.y - 2; up.lastDir = cP.lastDir + "u";
-        Qpush(right); Qpush(down); Qpush(left); Qpush(up);
-
+        if(!IsInvalidPoint(up)) Q.push(up);
+         if(!IsInvalidPoint(right)) Q.push(right);
+         if(!IsInvalidPoint(down)) Q.push(down);
+         if(!IsInvalidPoint(left)) Q.push(left); 
         return getShortestPath(tX, tY);
     }
     bool isWin()
     {
-        return isBlack();
+        ReadBlack();
+        
+        if(isBlack()) 
+        {hasFoundBlack = true;
+        myMap[carPosY][carPosX] = '&';
+        }
+        
+        return isBlack() || hasFoundBlack;
     }
     void discover()
     {
@@ -556,6 +524,14 @@ int get2DIn1D(int x, int y)
     }
     void insertInMap(int x, int y, char c)
     {
+      if(x < 0 || y < 0 || x > myMap[0].length()-1 || y > myMap[0].length()-1)
+      {
+        return;
+      }
+      if(x == 0 || y == 0 || x == myMap[0].length()-1 || y == myMap[0].length()-1)
+      {
+         c = '1'; 
+      }
         String temp = myMap[y];
         temp[x] = c;
         myMap[y] = temp;
@@ -571,7 +547,7 @@ int get2DIn1D(int x, int y)
     {
         rotateTo(c);
         //0 up, 1 right, 2 down, 3 left       
-        //moveForward();
+        MoveStepForward();
 
         if (facingDirection == 0)
         {
@@ -589,6 +565,8 @@ int get2DIn1D(int x, int y)
         {
             carPosX -= 2;
         }
+        ResetMode();
+        instructionIndex++;
     }
     
     void rotateTo(char c)
@@ -596,50 +574,49 @@ int get2DIn1D(int x, int y)
         int cRotation = c == 'u' ? 0 : c == 'r' ? 1 : c == 'd' ? 2 : 3;
         if (facingDirection == cRotation)
         {
-            SetMovingMode();
             return;
         }
         if ((facingDirection + 1) % 4 == cRotation)
         {
             rotateRight();
-            SetRotationMode(1, 1);
             return;
         }
         if (facingDirection == (cRotation + 1) % 4)
         {
             rotateLeft();
-            SetRotationMode(-1, 1);
             return;
         }
-        SetRotationMode(1, 2);
         rotateRight();
         rotateRight();
     }
     void rotateLeft()
     {
+        RotateCar90Left();
         facingDirection = (facingDirection + 3)%4;
     }
 
     void rotateRight()
     {
-        facingDirection = (facingDirection + 1) % 4; ;
+        RotateCar90Right();
+        facingDirection = (facingDirection + 1) % 4;
     }
      void Update()
     {
-        if (!hasReachedDestination && !isMoving)
-        {            
-            discover();
-            
-            pickGoToTargetSpot(); 
-            PrintMap();        
-            solve(targetX, targetY);            
-        }
-        if (!hasReturnedToBeg && isWin() && !isMoving)
+      if (!hasReturnedToBeg && isWin() && !isMoving)
         {
             setWin();
             hasReturnedToBeg = true;
             return;
         }
+        if (!hasReachedDestination && !isMoving)
+        {            
+            discover();
+            
+            pickGoToTargetSpot(); 
+            PrintMap();      
+            solve(targetX, targetY);            
+        }
+        
         if (isMoving)
         {            
             if (instructionIndex >= instructions.length())
@@ -653,37 +630,10 @@ int get2DIn1D(int x, int y)
                 {
                     moveInstruction(instructions[instructionIndex]);
                 }
-                if (movingTimer > 0)
-                {
-                    if (isMovementMode())
-                    {
-                        MovePhysicallyForward();
-            movingTimer = -1;
-                    }
-                    if (isRotationMode())
-                    {
-                        RotatePhysically();
-                        if(movingTimer > rotationTimerMax)
-                        {
-                          RotatePhysically();
-                        }
-            movingTimer = -1;
-                    }
-                }
-                else
-                {
-                    if (!isRotationMode())
-                    {
-                        ResetMode();
-                        instructionIndex++;
-                    }
-                    else
-                        SetMovingMode();
-                }
             }
         }
     }
-/////////////////////////AAAAAAAAAAAAAAAAAAAAAAAALLLLLLLLLLLLLLLLLLLLLLLLLGGGGGGGGGGGGGGGGGGGGGGGOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
+/////////////////////////AAAAAAAAAAAAAAAAAAAAAAAALLLLLLLLLLLLLLLLLLLLLLLLLGGGGGGGGGGGGGGGGGGGGGGGOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOoooooOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOooooo
 bool isWallFront()
 {
   ReadFront();
@@ -736,7 +686,7 @@ delay(sensorsDelay);
 /////////////////
 }
 bool isBlack()
-{
+{  
   return Black == 1;
 }
 void ReadFront()
@@ -744,6 +694,8 @@ void ReadFront()
   float Distance1_cm = 2000;
   while(Distance1_cm > 1000)
   {
+    for(int i = 0; i < NRemeasure; i++)
+    {
   //////////////Ultra Sonic Front
   digitalWrite(TriggerPin1, LOW);                   
   delayMicroseconds(2);
@@ -753,7 +705,12 @@ void ReadFront()
  
   Duration1 = pulseIn(EchoPin1,HIGH);        // Waits for the echo pin to get high
                                            // returns the Duration in microseconds
-  Distance1_cm = GetDistanceFront();   // Use function to calculate the distance
+  float temp = GetDistanceFront();
+  if(temp < Distance1_cm)
+    {
+    Distance1_cm = temp;
+  }
+    }// Use function to calculate the distance
   }
    Serial.print("Distance Front = ");             // Output to serial
  Serial.print(Distance1_cm);
@@ -766,6 +723,8 @@ void ReadRight()
   float Distance4_cm = 2000;
   while(Distance4_cm > 1000)
   {
+    for(int i = 0; i < NRemeasure; i++)
+    {
   //////////////Ultra Sonic Right
   digitalWrite(TriggerPin4, LOW);                   
   delayMicroseconds(2);
@@ -775,7 +734,12 @@ void ReadRight()
  
   Duration4 = pulseIn(EchoPin4,HIGH);        // Waits for the echo pin to get high
                                            // returns the Duration in microseconds
-  Distance4_cm = GetDistanceRight();   // Use function to calculate the distance
+  float temp = GetDistanceRight(); 
+  if(temp < Distance4_cm)
+  {
+    Distance4_cm = temp;
+  }
+    }// Use function to calculate the distance
   }
   
   Serial.print("Distance Right = ");             // Output to serial
@@ -789,6 +753,8 @@ void ReadBack()
   float Distance2_cm = 2000;
   while(Distance2_cm > 1000)
   {
+    for(int i = 0; i < NRemeasure; i++)
+    {
   //////////////Ultra Sonic Back
   digitalWrite(TriggerPin2, LOW);                   
   delayMicroseconds(2);
@@ -798,7 +764,12 @@ void ReadBack()
  
   Duration2 = pulseIn(EchoPin2,HIGH);        // Waits for the echo pin to get high
                                            // returns the Duration in microseconds
-  Distance2_cm = GetDistanceBack();   // Use function to calculate the distance
+  float temp = GetDistanceBack(); 
+  if(temp < Distance2_cm)
+  {
+    Distance2_cm = temp;// Use function to calculate the distance
+  }
+    }
   }
   
  Serial.print("Distance Back = ");             // Output to serial
@@ -812,6 +783,8 @@ void ReadLeft()
   float Distance3_cm = 2000;
   while(Distance3_cm > 1000)
   {
+    for(int i = 0; i < NRemeasure; i++)
+    {
   //////////////Ultra Sonic Left
   digitalWrite(TriggerPin3, LOW);                   
   delayMicroseconds(2);
@@ -820,8 +793,12 @@ void ReadLeft()
   digitalWrite(TriggerPin3, LOW);           // Trigger pin to HIGH
  
   Duration3 = pulseIn(EchoPin3,HIGH);        // Waits for the echo pin to get high
-                                           // returns the Duration in microseconds
-  Distance3_cm = GetDistanceLeft();   // Use function to calculate the distance
+  float temp = GetDistanceLeft();
+  if(temp < Distance3_cm)
+  {// returns the Duration in microseconds
+  Distance3_cm = temp; 
+  }
+     }// Use function to calculate the distance
   }
   Serial.print("Distance Left = ");             // Output to serial
   Serial.print(Distance3_cm);
