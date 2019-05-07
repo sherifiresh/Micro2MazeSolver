@@ -40,15 +40,15 @@ String myMap[11] = {
             "???????????",
             "???????????",
             "?e?????????",
-            "???????????",};
+            "???????????"};
 int carPosX = 1, carPosY = 9;
 
 QueueList<curPos> Q;
 int Qstart = 0;
 int Qsize = 0;
 
-int visitedS[25];
-int visitedB[25];
+int visitedS[50];
+int visitedB[50];
 int facingDirection = 0; //0 up, 1 right, 2 down, 3 left
 bool hasReachedDestination = false;
 int targetX = 0, targetY = 0;
@@ -167,7 +167,7 @@ void setup()
 void loop()
 {
     Start();
-    Update();
+    Update();    
 }
 //LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
 
@@ -252,12 +252,12 @@ void Start()
 }
 void refreshVS()
 {
-    for (int i = 0; i < 25; i++)
+    for (int i = 0; i < 50; i++)
         visitedS[i] = 0;
 }
 void refreshVB()
 {
-    for (int i = 0; i < 25; i++)
+    for (int i = 0; i < 50; i++)
         visitedB[i] = 0;
 }
 void ResetMode()//0 none, 1 move, 2 rotation
@@ -290,7 +290,7 @@ bool isRotationMode()//0 none, 1 move, 2 rotation
 }
 int get2DIn1D(int x, int y)
 {
-    return x / 2 + 5 * y / 2;
+    return x / 2 + 5 * (y / 2);
 }
 void MovePhysicallyForward()
 {
@@ -373,14 +373,6 @@ bool isWall(curPos cP)
 }
 void solve(int X, int Y)
 {
-    if (X < 0 || Y < 0 || X >= myMap[0].length() || Y >= myMap[0].length() || myMap[Y][X] == '1' || visitedB[get2DIn1D(X, Y)] == 1)
-    {
-
-        return;
-    }
-
-    visitedB[get2DIn1D(X, Y)] = 1;
-
     curPos beg;
     beg.x = carPosX; beg.y = carPosY; beg.lastDir = "";
     Q.push(beg);
@@ -393,6 +385,39 @@ void solve(int X, int Y)
 }
 bool IsInvalidPoint(curPos cP)
 {
+  if(cP.x == 9 && cP.y == 9 && cP.lastDir == "d")
+  {
+    Serial.println("IN");
+    if(cP.x < 0)
+    {
+      Serial.println("cP.x < 0");
+    }
+    if(cP.y < 0)
+    {
+      Serial.println("cP.y < 0");
+    }
+    if(cP.x >= myMap[0].length())
+    {
+      Serial.println("cP.x >= myMap[0].length()");
+    }
+    if(cP.y >= myMap[0].length())
+    {
+      Serial.println("cP.y >= myMap[0].length()");
+    }
+    if(isWall(cP))
+    {
+      Serial.println("isWall(cP)");
+    }
+    if(myMap[cP.y][cP.x] == '?' )
+    {
+      Serial.println("myMap[cP.y][cP.x] == '?' ");
+    }
+    if(visitedS[get2DIn1D(cP.x, cP.y)] == 1)
+    {
+      Serial.println("visitedS[get2DIn1D(cP.x, cP.y)] == 1");
+    }
+    
+  }
     return cP.x < 0 || cP.y < 0 || cP.x >= myMap[0].length() || cP.y >= myMap[0].length() || isWall(cP) || myMap[cP.y][cP.x] == '?' || visitedS[get2DIn1D(cP.x, cP.y)] == 1;
 }
 String getShortestPath(int tX, int tY)
@@ -623,6 +648,7 @@ void Update()
         if (instructionIndex >= instructions.length())
         {
             ResetMode();
+            visitedB[get2DIn1D(carPosX, carPosY)] = 1;
             isMoving = false;
         }
         else
@@ -637,23 +663,19 @@ void Update()
 /////////////////////////AAAAAAAAAAAAAAAAAAAAAAAALLLLLLLLLLLLLLLLLLLLLLLLLGGGGGGGGGGGGGGGGGGGGGGGOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOoooooOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOooooo
 bool isWallFront()
 {
-    ReadFront();
-    return GetDistanceFront() < wallExistDistance;
+    return ReadFront();
 }
 bool isWallRight()
 {
-    ReadRight();
-    return GetDistanceRight() < wallExistDistance;
+    return ReadRight();
 }
 bool isWallBack()
 {
-    ReadBack();
-    return GetDistanceBack() < wallExistDistance;
+    return ReadBack();
 }
 bool isWallLeft()
 {
-    ReadLeft();
-    return GetDistanceLeft() < wallExistDistance;
+    return ReadLeft();
 }
 void ReadSensors()
 {
@@ -690,10 +712,11 @@ bool isBlack()
 {
     return Black == 1;
 }
-void ReadFront()
+bool ReadFront()
 {
-    float Distance1_cm = 0;
-    int tempX = 0;
+    float Distance1_cm = 21;
+    int lessN = 0; int moreN = 0;
+    
     for (int i = 0; i < NRemeasure; i++)
     {
         //////////////Ultra Sonic Front
@@ -708,21 +731,32 @@ void ReadFront()
         float temp = GetDistanceFront();
         if (temp < 1000)
         {
-            Distance1_cm += temp;
-            tempX++;
+          if(temp < wallExistDistance)
+          {
+            lessN++;
+          }
+          else
+          {
+            moreN++;
+          }
+          Distance1_cm = wallExistDistance + 1;
+          if(lessN > moreN)
+          {
+            Distance1_cm = wallExistDistance - 1;
+          }
         }
     }// Use function to calculate the distance
-    Distance1_cm /= tempX;
     Serial.print("Distance Front = ");             // Output to serial
     Serial.print(Distance1_cm);
     Serial.println(" cm");
 
     delay(sensorsDelay);                             // Wait to do next measurement
+    return Distance1_cm < wallExistDistance;
 }
-void ReadRight()
+bool ReadRight()
 {
-    float Distance4_cm = 0;
-    int tempX = 0;
+    float Distance4_cm = 21;
+    int lessN = 0; int moreN = 0;
     for (int i = 0; i < NRemeasure; i++)
     {
         //////////////Ultra Sonic Right
@@ -737,22 +771,33 @@ void ReadRight()
         float temp = GetDistanceRight();
         if (temp < 1000)
         {
-            Distance4_cm += temp;
-            tempX++;
+          if(temp < wallExistDistance)
+          {
+            lessN++;
+          }
+          else
+          {
+            moreN++;
+          }
+          Distance4_cm = wallExistDistance + 1;
+          if(lessN > moreN)
+          {
+            Distance4_cm = wallExistDistance - 1;
+          }
         }
     }// Use function to calculate the distance
-    Distance4_cm /= tempX;
 
     Serial.print("Distance Right = ");             // Output to serial
     Serial.print(Distance4_cm);
     Serial.println(" cm");
 
     delay(sensorsDelay);                             // Wait to do next measurement
+    return Distance4_cm < wallExistDistance;
 }
-void ReadBack()
+bool ReadBack()
 {
-    float Distance2_cm = 0;
-    int tempX = 0;
+    float Distance2_cm = 21;
+    int lessN = 0; int moreN = 0;
     for (int i = 0; i < NRemeasure; i++)
     {
         //////////////Ultra Sonic Back
@@ -767,24 +812,33 @@ void ReadBack()
         float temp = GetDistanceBack();
         if (temp < 1000)
         {
-            Distance2_cm += temp;// Use function to calculate the distance
-            tempX++;
+          if(temp < wallExistDistance)
+          {
+            lessN++;
+          }
+          else
+          {
+            moreN++;
+          }
+          Distance2_cm = wallExistDistance + 1;
+          if(lessN > moreN)
+          {
+            Distance2_cm = wallExistDistance - 1;
+          }
         }
     }
-    Distance2_cm /= tempX;
 
     Serial.print("Distance Back = ");             // Output to serial
     Serial.print(Distance2_cm);
     Serial.println(" cm");
 
     delay(sensorsDelay);                             // Wait to do next measurement
+    return Distance2_cm < wallExistDistance;
 }
-void ReadLeft()
+bool ReadLeft()
 {
-    float Distance3_cm = 0;
-    int tempX = 0;
-    while (Distance3_cm == 0)
-    {
+    float Distance3_cm = 21;
+    int lessN = 0; int moreN = 0;
         for (int i = 0; i < NRemeasure; i++)
         {
             //////////////Ultra Sonic Left
@@ -798,18 +852,29 @@ void ReadLeft()
             float temp = GetDistanceLeft();
             if (temp < 1000)
             {// returns the Duration in microseconds
-                Distance3_cm += temp;
-                tempX++;
+
+                if(temp < wallExistDistance)
+          {
+            lessN++;
+          }
+          else
+          {
+            moreN++;
+          }
+          Distance3_cm = wallExistDistance + 1;
+          if(lessN > moreN)
+          {
+            Distance3_cm = wallExistDistance - 1;
+          }
             }
         }
-    }
     // Use function to calculate the distance
-    Distance3_cm /= tempX;
     Serial.print("Distance Left = ");             // Output to serial
     Serial.print(Distance3_cm);
     Serial.println(" cm");
 
     delay(sensorsDelay);                             // Wait to do next measurement
+    return Distance3_cm < wallExistDistance;
 }
 ////////////////Right Wheel Movement
 void SetWheelRight(int s)
