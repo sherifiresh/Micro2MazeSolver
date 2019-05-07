@@ -2,7 +2,7 @@
 #include <SD.h>
 #include <SPI.h>
 
-int CS_PIN = 10;
+int CS_PIN = 53;
 
 File file;
 
