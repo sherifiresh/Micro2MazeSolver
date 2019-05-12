@@ -166,8 +166,26 @@ void setup()
 //LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
 void loop()
 {
-    Start();
-    Update();
+  if(!ReadFront())
+  {
+    MoveStepForward();
+  }
+  else if(!ReadRight())
+  {
+    RotateCar90Right();
+    MoveStepForward();
+  }
+  else if(!ReadBack())
+  {
+    RotateCar90Right();
+    RotateCar90Right();
+    MoveStepForward();
+  }
+  else if(!ReadLeft())
+  {
+    RotateCar90Left();
+    MoveStepForward();
+  }
 }
 //LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
 
