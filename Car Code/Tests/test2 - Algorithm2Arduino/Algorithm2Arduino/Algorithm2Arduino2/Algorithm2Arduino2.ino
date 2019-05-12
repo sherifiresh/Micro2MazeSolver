@@ -193,6 +193,9 @@ void loop()
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> parent of a6217bf... ALGO DONE
+=======
 >>>>>>> parent of a6217bf... ALGO DONE
 =======
 >>>>>>> parent of a6217bf... ALGO DONE
